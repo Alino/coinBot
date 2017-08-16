@@ -35,8 +35,9 @@ export class CoinBot {
     previousCoinsData: coinsData;
     totalMoneyEarned: number;
     bestCoinToBuy: string;
+    currentPercentIncreaseRecord: number;
     static requiredPercentChangeToSwap: -1;
-    static secondsBetweenChecks = 60;
+    static secondsBetweenChecks = 60 * 4;
 
     constructor() {
         this.ownedCoins = {
@@ -46,6 +47,7 @@ export class CoinBot {
             }
         };
         this.totalMoneyEarned = 0;
+        this.currentPercentIncreaseRecord = 0;
         this.loop();
         let secondsLeft = CoinBot.secondsBetweenChecks;
         setInterval(() => {
@@ -75,10 +77,16 @@ export class CoinBot {
                 const coin = CoinBot.getCryptoById(key, currentCoinsData);
                 const diff = parseFloat(coin.price_eur) - this.ownedCoins[coin.id].buyPriceEur;
                 const diffPercentage = diff / this.ownedCoins[coin.id].buyPriceEur * 100;
-                if (diffPercentage < -0.5 || parseFloat(coin.percent_change_1h) < -1) {
-                    this.swapCoin(coin.id, bestCoin.id);
-                    console.log(`owned coins: ${JSON.stringify(this.ownedCoins)}`);
-                    didSwap = true;
+                if (diffPercentage > this.currentPercentIncreaseRecord) {
+                    this.currentPercentIncreaseRecord = diffPercentage;
+                }
+                if (bestCoin.id != coin.id) {
+                    if (diffPercentage < -1 || parseFloat(coin.percent_change_1h) < -1
+                    || (this.currentPercentIncreaseRecord > 0 && (diffPercentage - this.currentPercentIncreaseRecord) < -1)) {
+                        this.swapCoin(coin.id, bestCoin.id);
+                        console.log(`owned coins: ${JSON.stringify(this.ownedCoins)}`);
+                        didSwap = true;
+                    }
                 }
                 if (!didSwap && index === arr.length - 1) {
                     // const diff = parseFloat(coin.percent_change_1h) - parseFloat(CoinBot.getCryptoById(coin.id, this.previousCoinsData).percent_change_1h);
@@ -113,6 +121,7 @@ export class CoinBot {
             count: toCoinCount,
             buyPriceEur: toPriceEur
         }
+        this.currentPercentIncreaseRecord = 0;
         delete this.ownedCoins[fromId];
     }
 
