@@ -38,12 +38,62 @@ export class CoinBot {
     currentPercentIncreaseRecord: number;
     static requiredPercentChangeToSwap: -1;
     static secondsBetweenChecks = 60 * 4;
+    static shapeShiftCurrencies = [
+        'Bitcoin',
+        'Ethereum',
+        'Golem',
+        'Siacoin',
+        'Aragon',
+        'Basic Attention Token',
+        'Bancor',
+        'Bitcoin Cash',
+        'Blackcoin',
+        'Bitshares',
+        'Civic',
+        'Dash',
+        'Decred',
+        'DigixDao',
+        'Dogecoin',
+        'Edgeless',
+        'EOS',
+        'Ethereum Classic',
+        'Factoids',
+        'FunFair',
+        'GameCredits',
+        'Gnosis',
+        'Matchpool',
+        'Iconomi',
+        'Komodo',
+        'LBRY Credits',
+        'Litecoin',
+        'Melon',
+        'Metal',
+        'Monacoin',
+        'Namecoin',
+        'Numeraire',
+        'OmiseGo',
+        'Potcoin',
+        'Augur',
+        'Reddcoin',
+        'iExec',
+        'Status',
+        'Startcoin',
+        'SingularDTV',
+        'Swarm City',
+        'TokenCard',
+        'WeTrust',
+        'Voxels',
+        'Vericoin',
+        'Vertoin',
+        'Ripple',
+        'Zcash'
+    ];
 
     constructor() {
         this.ownedCoins = {
-            stratis: {
-                count: 100,
-                buyPriceEur: 3.5
+            bitcoin: {
+                count: 0.2,
+                buyPriceEur: 3542
             }
         };
         this.totalMoneyEarned = 0;
@@ -61,9 +111,16 @@ export class CoinBot {
         }, 1000);
     }
 
+    static filterCoins(currentCoinsData: coinsData) {
+        return currentCoinsData.filter((coinData) => {
+            return _.includes(CoinBot.shapeShiftCurrencies, coinData.name);
+        })
+    }
+
     loop() {
         CoinBot.getCoinData().then((data) => {
-            const currentCoinsData: coinsData = JSON.parse(data);
+            let currentCoinsData: coinsData = JSON.parse(data);
+            currentCoinsData = CoinBot.filterCoins(currentCoinsData);
             if (!this.previousCoinsData) this.previousCoinsData = currentCoinsData;
             this.currentCoinsData = currentCoinsData;
             const bestCoin = CoinBot.getBestCoinToBuyNow(currentCoinsData);
@@ -100,8 +157,8 @@ export class CoinBot {
         });
     }
 
-    static getCoinData(limit = 50) {
-        const url = `https://api.coinmarketcap.com/v1/ticker/?convert=EUR&limit=${limit}`;
+    static getCoinData() {
+        const url = `https://api.coinmarketcap.com/v1/ticker/?convert=EUR`;
         return rp(url);
     }
 
